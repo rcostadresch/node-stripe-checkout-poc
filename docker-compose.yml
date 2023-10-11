@@ -1,0 +1,54 @@
+version: '3.7'
+volumes:
+  stripe-poc-data:
+    name: stripe-poc-data
+
+networks:
+  stripe-poc-net:
+    name: stripe-poc-net
+    driver: bridge
+
+services:
+  #######################################
+  # NodeJS
+  #######################################
+  stripe-poc-nodejs:
+    container_name: stripe-poc-nodejs
+    restart: always
+    build:
+      context: ./
+      target: local
+    environment:
+      - NODE_ENV=development
+      - PORT=8002
+      - DEBUG=true
+      - PRIVATE_KEY=example-key
+      - SOCKET_TIMEOUT=2000
+    volumes:
+      - './:/usr/src/app'
+    ports:
+      - 8002:8002
+      - 9229:9229
+    networks:
+      - stripe-poc-net
+    depends_on:
+      - stripe-poc-database
+
+  #######################################
+  # Postgres
+  #######################################
+  stripe-poc-database:
+    image: postgres:13.4
+    container_name: stripe-poc-database
+    restart: on-failure
+    networks:
+      - stripe-poc-net
+    volumes:
+      - stripe-poc-data:/var/lib/postgresql/data
+      - ./docker-postgresql-multiple-databases:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_MULTIPLE_DATABASES: ${DATABASE_TEST_NAME:-stripe-poc_test},${DATABASE_NAME:-stripe-poc}
+      POSTGRES_USER: ${DATABASE_USER:-stripe-poc}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-stripe-poc}
+    ports:
+      - '5432:5432'

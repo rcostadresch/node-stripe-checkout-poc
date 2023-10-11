@@ -1,0 +1,1 @@
+export { exceptionMiddleware } from './exceptionMiddleware'
