@@ -6,6 +6,10 @@ import { ErrorHandler } from 'errors/ErrorHandler'
 import { exceptionMiddleware } from 'middlewares'
 import { httpStatusCodes, reasonPhrase } from 'errors/httpStatusCodes'
 
+import { checkoutRoutes } from './checkout'
+import { productRoutes } from './products'
+import { userRoutes } from './users'
+
 function routes(http: express.Application): void {
   http.get('/health', (req, res, next) => {
     const health = {
@@ -21,6 +25,10 @@ function routes(http: express.Application): void {
       next(new ErrorHandler(error, httpStatusCodes.SERVICE_UNAVAILABLE, reasonPhrase.SERVICE_UNAVAILABLE))
     }
   })
+
+  checkoutRoutes(http)
+  productRoutes(http)
+  userRoutes(http)
 
   http.use(
     '/swagger',

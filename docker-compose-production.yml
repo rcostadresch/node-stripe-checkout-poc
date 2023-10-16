@@ -1,0 +1,58 @@
+version: '3.7'
+volumes:
+  stripe-poc-data:
+    name: stripe-poc-data
+
+networks:
+  stripe-poc-net:
+    name: stripe-poc-net
+    driver: bridge
+
+services:
+  #######################################
+  # NodeJS
+  #######################################
+  stripe-poc-nodejs:
+    container_name: stripe-poc-nodejs
+    restart: always
+    build:
+      context: ./
+      target: remote
+    environment:
+      - NODE_ENV=production
+      - PORT=8002
+      - DEBUG=true
+      - PRIVATE_KEY=example-key
+      - SOCKET_TIMEOUT=2000
+      - DATABASE_URL=postgres://stripe-poc:stripe-poc@stripe-poc-database:5432/stripe-poc
+      - DATABASE_TYPE=postgres
+      - DATABASE_HOST=stripe-poc-database
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=stripe-poc
+      - DATABASE_USER=stripe-poc
+      - DATABASE_PASSWORD=stripe-poc
+    ports:
+      - 8002:8002
+      - 9229:9229
+    networks:
+      - stripe-poc-net
+    depends_on:
+      - stripe-poc-database
+
+  #######################################
+  # Postgres
+  #######################################
+  stripe-poc-database:
+    image: postgres:9.6
+    container_name: stripe-poc-database
+    restart: on-failure
+    networks:
+      - stripe-poc-net
+    volumes:
+      - stripe-poc-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-stripe-poc}
+      POSTGRES_USER: ${DATABASE_USER:-stripe-poc}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-stripe-poc}
+    ports:
+      - '5432:5432'
